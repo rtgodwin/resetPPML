@@ -1,49 +1,80 @@
-feeplot <- function(model, data, maxpred = 6) {
-  b <- model$beta
-  g <- model$gamma
-  if (model$dist == "negbin") {a <- model$alpha}
-
+feeplot <- function(model, data, maxpred, ylimit, ccex) {
+  
+  plotpp <- function(model, data, maxpred) {
+    preds <- feepred(model, data, maxpred)
+    points(x = df.bar[,1], y = preds, pch=25, col="darkmagenta",cex=ccex)
+    lines(x = df.bar[,1], y = preds, col="darkmagenta",lwd=ccex)
+    leg <<- c(leg, "counterfactual distribution")
+    cols <<- c(cols, "darkmagenta")
+    pchs <<- c(pchs, 25)
+  }
+  
+  plotztnb <- function(model, data, maxpred) {
+    preds <- feepred(model, data, maxpred)
+    points(x = df.bar[,1], y = preds, pch=18, col="red",cex=ccex)
+    lines(x = df.bar[,1], y = preds, col="red",lwd=ccex)
+    leg <<- c(leg, "counterfactual distribution")
+    cols <<- c(cols, "red")
+    pchs <<- c(pchs, 18)
+  }
+  
+  plotoipp <- function(model, data, maxpred) {
+    preds <- feepred(model, data, maxpred)
+    points(x = df.bar[,1], y = preds, pch=17, col="green",cex=ccex)
+    lines(x = df.bar[,1], y = preds, col="green",lwd=ccex)
+    leg <<- c(leg, "factual distribution")
+    cols <<- c(cols, "green")
+    pchs <<- c(pchs, 17)
+  }
+  
+  plotoiztnb <- function(model, data, maxpred) {
+    preds <- feepred(model, data, maxpred)
+    points(x = df.bar[,1], y = preds, pch=16, col="blue",cex=ccex)
+    lines(x = df.bar[,1], y = preds, col="blue",lwd=ccex)
+    leg <<- c(leg, "factual distribution")
+    cols <<- c(cols, "blue")
+    pchs <<- c(pchs, 16)
+  }
+  
+  #b <- model$beta
+  #g <- model$gamma
+  #if (model$dist == "negbin") {a <- model$alpha}
+  
   formula <- model$formula
   cleandata <- makeXZy(formula, data)
-  X <- cleandata$X
-  Z <- cleandata$Z
+  #X <- cleandata$X
+  #Z <- cleandata$Z
   y <- cleandata$y
-
-  l <- exp(X %*% b)
-  t <- exp(-Z %*% g)
-
-  if (model$dist == "Poisson") {
-    w <- -l * (exp(l) - l - 1) ^ -1 + (1 + l * (exp(l) - l - 1) ^ -1) * (1 + t) ^ -1
-    predcontrol = predtreated = rep(0,maxpred)
-    predcontrol[1] <- sum(l/(exp(l)-1))
-    predtreated[1] <- sum(w + (1-w)*l/(exp(l)-1))
-    for(pp in 2:(maxpred)){
-      predcontrol[pp] <- sum((l^(pp))/((exp(l)-1)*factorial(pp)))
-      predtreated[pp] <- sum((1-w)*(l^(pp))/((exp(l)-1)*factorial(pp)))
-    }
+  
+  if(missing(maxpred)) {
+    maxpred = max(y)
   }
-
-  if (model$dist == "negbin") {
-    th <- l / a
-    P1 <- a * ((1 / (1 + th)) ^ a) * th / (1 + th - (1 + th) ^ (1 - a))
-    L <- -P1 / (1 - P1)
-    w <- L + (1 - L) / (1 + t)
-    predcontrol = predtreated = rep(0,maxpred)
-    predcontrol[1] <- sum((gamma(a + 1) / gamma(a) / gamma(2)) * ((1 / (1 + th)) ^ a) * (th / (1 + th)) * (1 / (1 - (1 + th) ^ (-a))))
-    predtreated[1] <- sum(w + (1 - w) * a * ((1 / (1 + th)) ^ a) * (th / (1 + th - (1 + th) ^ (1 - a))))
-    for(pp in 2:(maxpred)){
-      predcontrol[pp] <- sum((gamma(a + pp) / gamma(a) / gamma(pp + 1)) * ((1 / (1 + th)) ^ a) * ((th / (1 + th)) ^ pp) * (1 / (1 - (1 + th) ^ (-a))))
-      predtreated[pp] <- sum((1 - w) * (gamma(a + pp) / gamma(a) / gamma(pp + 1)) * ((1 / (1 + th)) ^ a) * ((th / (1 + th)) ^ pp) * (1 / (1 - (1 + th) ^ (-a))))
-    }
+  
+  if(missing(ylimit)) {
+    ylimit = max(tabulate(y)) * 1.1
   }
+  
+  if(missing(ccex)) {
+    ccex = 1.5
+  }
+  
+  df.bar <- barplot(tabulate(y)[1:maxpred], names=1:maxpred, xlab="count", ylab="frequency", col="gray", ylim = c(0, ylimit))
+  leg <- "actual data"
+  cols <- "gray"
+  pchs <- 15
+  
+  if(class(model) == "oneinflmodel" & model$dist == "Poisson") {
+    plotoipp(model, data, maxpred)
+    modelcounter <- model
+    class(modelcounter) <- "truncmodel"
+    plotpp(modelcounter, data, maxpred)
+  } else if(class(model) == "oneinflmodel" & model$dist == "negbin") {
+    plotoiztnb(model, data, maxpred)
+    modelcounter <- model
+    class(modelcounter) <- "truncmodel"
+    plotztnb(modelcounter, data, maxpred)
+  }
+  
+  legend("topright", legend=leg, col=cols, pch=pchs, cex = 1)
 
-  probs = t(matrix(c(predcontrol,predtreated),(maxpred),2))
-
-  pdf("fee.pdf", width=4, height=3, pointsize = 12, bg = "white")
-  par(mar=c(2,4,1,1),cex=.75,cex.axis=.75,cex.lab=0.75)
-  df.bar <- barplot(probs, beside=TRUE,names=1:maxpred,xlab="count",ylab="frequency",col=c("gray","gray50"), ylim = c(0, tabulate(y)[1]*1.1))
-  points(x = df.bar[2,], y = tabulate(y)[1:maxpred], pch=16, col="blue",cex=1)
-  legend("topright", legend = c("actual data", "treatment distribution", "control (counterfactual) distribution"), col=c("blue", "gray50","gray"), pch = c(16,15,15), cex = 0.8)
-
-  dev.off()
 }
