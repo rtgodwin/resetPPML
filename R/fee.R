@@ -35,6 +35,7 @@ fee <- function(model, data, at="AE") {
     q$fee <- mean(fee_negbin(b, g, a, X, Z))
     J <- as.matrix(colMeans(attr(numericDeriv(quote(fee_negbin(b, g, a, X, Z)), c("b", "g", "a")), "gradient")))
     q$sefee <- sqrt(t(J) %*% model$vc %*% J)
+    q$treatment_visits <- sum(fee_negbin(b, g, X, Z))
   }
   q
 }
