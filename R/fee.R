@@ -30,12 +30,12 @@ fee <- function(model, data, at="AE") {
     q$fee <- mean(fee_pois(b, g, X, Z))
     J <- as.matrix(colMeans(attr(numericDeriv(quote(fee_pois(b, g, X, Z)), c("b", "g")), "gradient")))
     q$sefee <- sqrt(t(J) %*% model$vc %*% J)
-    if (at="AE") {q$treatment_visits <- sum(fee_pois(b, g, X, Z))}
+    if (at == "AE") {q$treatment_visits <- sum(fee_pois(b, g, X, Z))}
   } else if (model$dist == "negbin") {
     q$fee <- mean(fee_negbin(b, g, a, X, Z))
     J <- as.matrix(colMeans(attr(numericDeriv(quote(fee_negbin(b, g, a, X, Z)), c("b", "g", "a")), "gradient")))
     q$sefee <- sqrt(t(J) %*% model$vc %*% J)
-    if (at="AE") {q$treatment_visits <- sum(fee_negbin(b, g, a, X, Z))}
+    if (at == "AE") {q$treatment_visits <- sum(fee_negbin(b, g, a, X, Z))}
   }
   q
 }
