@@ -1,11 +1,10 @@
-Package: fee
+Package: resetPPML
 Type: Package
-Title: What the Package Does (Title Case)
+Title: RESET tests for PPML models, including gravity models of trade.
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: Ryan T. Godwin
+Maintainer: Ryan T. Godwin <ryan.godwin@umanitoba.ca>
+Description: This package conducts RESET tests for PPML models, including gravity models of trade, using objects that have been obtained by glm.
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
