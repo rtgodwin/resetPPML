@@ -1,56 +1,46 @@
-resetlm <- function(mod, aug.terms = 2, robust = T) {
+resetWald<- function(mod, aug.terms = 2, robust = T, fourier = T, sin.link = T) {
   
-  yhat <- mod$fitted.values
-  y <- mod$y
-  uhat <- y - yhat
-  w <- sqrt(yhat)
-  util <- uhat / w
-  n <- nrow(mod$model)
-  z <- list()
-  
+  etahat <- predict(mod, type = "link")
   original_formula <- mod$formula
-  response_var <- all.vars(original_formula)[1]
-  predictor_vars <- all.vars(original_formula)[-1] # Exclude the first variable (response)
-  
-  if(robust == F) {
-    new_response_var <- "util"
-    # Create the new formula string
-    if(aug.terms == 1) {
-      new_formula_string <- paste(new_response_var, "~ w +", paste("I(w *", predictor_vars, ")", collapse=" + "), "+ I(w * log(yhat) ^ 2) - 1")
-    } else if(aug.terms == 2) {
-      new_formula_string <- paste(new_response_var, "~ w +", paste("I(w *", predictor_vars, ")", collapse=" + "), "+ I(w * log(yhat) ^ 2) + I(w * log(yhat) ^ 3) - 1")
-    } else if(aug.terms == 3) {
-      new_formula_string <- paste(new_response_var, "~ w +", paste("I(w *", predictor_vars, ")", collapse=" + "), "+ I(w * log(yhat) ^ 2) + I(w * log(yhat) ^ 3) + I(w * log(yhat) ^ 4) - 1")
-    } else if(aug.terms == 4) {
-      new_formula_string <- paste(new_response_var, "~ w +", paste("I(w *", predictor_vars, ")", collapse=" + "), "+ I(w * log(yhat) ^ 2) + I(w * log(yhat) ^ 3) + I(w * log(yhat) ^ 4) + I(w * log(yhat) ^ 5) - 1")
+  dat <- model.frame(mod)
+  dat$etahat <- etahat
+  z <- list()
+
+  if(fourier == T) {
+    
+    if(sin.link == T) {
+      dat$v <- 2 * pi * sin(etahat) ^ 2 - pi
     }
-    new_formula <- as.formula(new_formula_string)
     
-    aux <- lm(new_formula, data = mod$model)
+    if(sin.link == F) {
+      dat$v <- pi * (2 * (etahat) - (max(etahat) - min(etahat))) / (max(etahat) - min(etahat))
+    }
     
-    z$reset <- n * summary(aux)$r.squared
-    z$pval <- 1 - pchisq(z$reset, aug.terms)
-    
-    return(z)
+    # Add new variables to the predictors part
+    if(aug.terms == 1) {stop("Augmentation terms must be a multiple of 2 for the Fourier transform")}
+    if(aug.terms == 2) {new_formula <- update(original_formula, . ~ . + sin(v) + cos(v))}
+    if(aug.terms == 3) {stop("Augmentation terms must be a multiple of 2 for the Fourier transform")}
+    if(aug.terms == 4) {new_formula <- update(original_formula, . ~ . + sin(v) + cos(v) + I(sin(2*v)) + I(cos(2*v)))}
   }
+  
+  if(fourier == F) {
+    # Add nev variables to the predictors part
+    if(aug.terms == 1) {new_formula <- update(original_formula, . ~ . + I(etahat^2))}
+    if(aug.terms == 2) {new_formula <- update(original_formula, . ~ . + I(etahat^2) + I(etahat^3))}
+    if(aug.terms == 3) {new_formula <- update(original_formula, . ~ . + I(etahat^2) + I(etahat^3) + I(etahat^4))}
+    if(aug.terms == 4) {new_formula <- update(original_formula, . ~ . + I(etahat^2) + I(etahat^3) + I(etahat^4) + I(etahat^5))}
+  }
+  
+  aux <- glm(new_formula, data = dat, family = stats::quasipoisson(link = "log"))
   
   if(robust == T) {
-    new_response_var1 <- "I(w * log(yhat) ^ 2)"
-    new_formula_string1 <- paste(new_response_var1, "~ w +", paste("I(w *", predictor_vars, ")", collapse=" + "), "- 1")
-    new_formula1 <- as.formula(new_formula_string1)
-    aux1resids <- lm(new_formula1, data = mod$model)$residuals
-    
-    new_response_var2 <- "I(w * log(yhat) ^ 3)"
-    new_formula_string2 <- paste(new_response_var2, "~ w +", paste("I(w *", predictor_vars, ")", collapse=" + "), "- 1")
-    new_formula2 <- as.formula(new_formula_string2)
-    aux2resids <- lm(new_formula2, data = mod$model)$residuals
-    
-    ones <- rep(1, n)
-    aux <- lm(ones ~ I(util * aux1resids) + I(util * aux2resids) -1)
-    
-    z$reset.robust <- n - sum(aux$residuals ^ 2)
-    z$pval <- 1 - pchisq(z$reset.robust, 2)
-    
-    return(z)
+    z$reset <- lmtest::waldtest(mod, aux, test = "Chisq", vcov = sandwich::vcovHC(aux, type = "HC1"))$Chisq[2]
+    z$pval <- lmtest::waldtest(mod, aux, test = "Chisq", vcov = sandwich::vcovHC(aux, type = "HC1"))$"Pr(>Chisq)"[2]
   }
+  
+  if(robust == F) {
+    z$reset <- lmtest::waldtest(mod, aux, test = "Chisq")$Chisq[2]
+    z$pval <- lmtest::waldtest(mod, aux, test = "Chisq")$"Pr(>Chisq)"[2]
+  }
+  return(z)
 }
