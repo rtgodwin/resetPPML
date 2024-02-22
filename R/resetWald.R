@@ -34,13 +34,25 @@ resetWald<- function(mod, aug.terms = 2, robust = T, fourier = T, sin.link = T) 
   aux <- glm(new_formula, data = dat, family = stats::quasipoisson(link = "log"))
   
   if(robust == T) {
-    z$reset <- lmtest::waldtest(mod, aux, test = "Chisq", vcov = sandwich::vcovHC(aux, type = "HC1"))$Chisq[2]
-    z$pval <- lmtest::waldtest(mod, aux, test = "Chisq", vcov = sandwich::vcovHC(aux, type = "HC1"))$"Pr(>Chisq)"[2]
+    temp_result <- try(lmtest::waldtest(mod, aux, test = "Chisq", vcov = sandwich::vcovHC(aux, type = "HC1")), silent = TRUE)
+    if (inherits(temp_result, "try-error")) {
+      z$reset <- 1000
+      z$pval <- 0
+    } else {
+      z$reset <- temp_result$Chisq[2]
+      z$pval <- temp_result$"Pr(>Chisq)"[2]
+    }
   }
   
   if(robust == F) {
-    z$reset <- lmtest::waldtest(mod, aux, test = "Chisq")$Chisq[2]
-    z$pval <- lmtest::waldtest(mod, aux, test = "Chisq")$"Pr(>Chisq)"[2]
+    temp_result <- try(lmtest::waldtest(mod, aux, test = "Chisq"), silent = TRUE)
+    if (inherits(temp_result, "try-error")) {
+      z$reset <- 1000
+      z$pval <- 0
+    } else {
+      z$reset <- temp_result$Chisq[2]
+      z$pval <- temp_result$"Pr(>Chisq)"[2]
+    }
   }
   return(z)
 }
