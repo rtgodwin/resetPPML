@@ -39,7 +39,7 @@ resetWaldTF<- function(mod, robust = T, sin.link = T, bothlinks = F) {
   }
   
   if(robust == T) {
-    temp_result <- try(lmtest::waldtest(mod, aux, test = "Chisq", vcov = sandwich::vcovHC(aux, type = "HC1")), silent = TRUE)
+    temp_result <- try(lmtest::waldtest(mod, aux, test = "Chisq", vcov = sandwich::vcovHC(aux, type = "HC0")), silent = TRUE)
     if (inherits(temp_result, "try-error")) {
       z$reset <- 1000
       z$pval <- 0
