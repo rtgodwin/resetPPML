@@ -29,7 +29,7 @@ resetWaldTF<- function(mod, robust = T, sin.link = T, bothlinks = F) {
     aug.terms = 6
     
     dat$v <- 2 * pi * sin(etahat) ^ 2 - pi
-    dat$z <- pi * (2 * (etahat) - (max(etahat) - min(etahat))) / (max(etahat) - min(etahat))
+    dat$z <- pi * (2 * (etahat) - (max(etahat) + min(etahat))) / (max(etahat) - min(etahat))
     
     new_formula <- update(original_formula, . ~ . + sin(v) + cos(v) + sin(z) + cos(z))
     new_formula <- update(new_formula, . ~ . + I(etahat^2) + I(etahat^3))
