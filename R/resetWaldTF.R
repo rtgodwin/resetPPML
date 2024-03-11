@@ -14,7 +14,7 @@ resetWaldTF<- function(mod, robust = T, sin.link = T, bothlinks = F) {
     }
     
     if(sin.link == F) {
-      dat$v <- pi * (2 * (etahat) - (max(etahat) - min(etahat))) / (max(etahat) - min(etahat))
+      dat$v <- pi * (2 * (etahat) - (max(etahat) + min(etahat))) / (max(etahat) - min(etahat))
     }
     
     new_formula <- update(original_formula, . ~ . + sin(v) + cos(v))
