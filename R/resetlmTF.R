@@ -21,13 +21,13 @@ resetlmTF <- function(mod, robust = T, sin.link = T, bothlinks = F) {
     }
     
     if(sin.link == F) {
-      v <- pi * (2 * (etahat) - (max(etahat) - min(etahat))) / (max(etahat) - min(etahat))
+      v <- pi * (2 * (etahat) - (max(etahat) + min(etahat))) / (max(etahat) - min(etahat))
     }
     
     if(bothlinks == T) {
       aug.terms = 6
       v <- 2 * pi * ((sin(etahat)) ^ 2) - pi
-      z <- pi * (2 * (etahat) - (max(etahat) - min(etahat))) / (max(etahat) - min(etahat))
+      z <- pi * (2 * (etahat) - (max(etahat) + min(etahat))) / (max(etahat) - min(etahat))
     }
     
     if(robust == T) {
