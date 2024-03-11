@@ -20,7 +20,7 @@ resetlm <- function(mod, aug.terms = 2, robust = T, fourier = T, sin.link = T) {
     }
     
     if(sin.link == F) {
-      v <- pi * (2 * (etahat) - (max(etahat) - min(etahat))) / (max(etahat) - min(etahat))
+      v <- pi * (2 * (etahat) - (max(etahat) + min(etahat))) / (max(etahat) - min(etahat))
     }
     
     if(robust == T) {
