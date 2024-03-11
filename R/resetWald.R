@@ -13,7 +13,7 @@ resetWald<- function(mod, aug.terms = 2, robust = T, fourier = T, sin.link = T) 
     }
     
     if(sin.link == F) {
-      dat$v <- pi * (2 * (etahat) - (max(etahat) - min(etahat))) / (max(etahat) - min(etahat))
+      dat$v <- pi * (2 * (etahat) - (max(etahat) + min(etahat))) / (max(etahat) - min(etahat))
     }
     
     # Add new variables to the predictors part
