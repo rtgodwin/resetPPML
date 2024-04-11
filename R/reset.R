@@ -6,7 +6,7 @@ reset <- function(mod) {
   #Wald
   z$Wald.GLM.Taylor.aug1 <- resetWald(mod, aug.terms = 1, robust = F, fourier = F)
   z$Wald.GLM.Taylor.aug2 <- resetWald(mod, aug.terms = 2, robust = F, fourier = F)
-  tryCatch(
+  z$Wald.GLM.Taylor.aug3 <- tryCatch(
     resetWald(mod, aug.terms = 3, robust = F, fourier = F),
     warning = function(w) {z$Wald.GLM.Taylor.aug3 <<- "GLM failed to converge"})
   z$Wald.GLM.Taylor.aug4 <- resetWald(mod, aug.terms = 4, robust = F, fourier = F)
